@@ -1,0 +1,42 @@
+name: Deploy laptop service to GCP Cloud run
+
+on:
+    push:
+        branches: ["main"]
+
+
+env:
+    PROJECT_ID: glassy-landing-380419
+    SERVICE: ks-ecomm-laptop
+    REGION: me-west1
+
+jobs:
+    deploy: 
+        permissions: 
+            contents: 'read'
+            id-token: 'write'
+        
+        runs-on: ubuntu-latest
+        steps: 
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Google Auth
+              id: auth
+              uses: 'google-github-actions/auth@v0'
+              with:
+                workload_identity_provider: '${{ secrets.WIF_PROVIDER }}' # e.g. - projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider
+                service_account: '${{ secrets.WIF_SERVICE_ACCOUNT }}' # e.g. - my-service-account@my-project.iam.gserviceaccount.com
+
+            - name: Deploy to Cloud Run
+              id: deploy
+              uses: google-github-actions/deploy-cloudrun@v0
+              with:
+                service: ${{ env.SERVICE }}
+                region: ${{ env.REGION }}
+
+            - name: Show Output
+              run: echo ${{ steps.deploy.outputs.url }}
+
+
+
